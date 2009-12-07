@@ -1,0 +1,11 @@
+Package: rotationinhibitor
+Priority: optional
+Section: System
+Architecture: iphoneos-arm
+Version: 0.5
+Description: Rotation Inhibitor with toggle for SBSettings
+Depiction: http://booleanmagic.com/cydia/rotationinhibitor/
+Name: Rotation Inhibitor
+Depends: sbsettings (>= 1.10)
+Author: Ryan Petrich <rpetrich@gmail.com>
+Icon: file:///var/mobile/Library/SBSettings/Themes/Default/Rotation/off.png
