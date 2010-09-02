@@ -62,6 +62,10 @@ static BOOL rotationEnabled;
 + (id)sharedInstanceIfAvailable;
 @end
 
+@interface SpringBoard (OS40)
+- (UIInterfaceOrientation)activeInterfaceOrientation;
+@end
+
 CHDeclareClass(SBOrientationLockManager)
 CHDeclareClass(SBAppSwitcherController)
 
@@ -156,7 +160,7 @@ void setState(BOOL enable)
 			if ([lockManager lockOverride])
 				[lockManager updateLockOverrideForCurrentDeviceOrientation];
 		} else {
-			[lockManager lock:[lockManager lockOrientation]];
+			[lockManager lock:[(SpringBoard *)[UIApplication sharedApplication] activeInterfaceOrientation]];
 			if ([lockManager lockOverride])
 				[lockManager setLockOverride:0 orientation:UIDeviceOrientationUnknown];
 		}
