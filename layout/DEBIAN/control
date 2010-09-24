@@ -2,7 +2,7 @@ Package: rotationinhibitor
 Priority: optional
 Section: System
 Architecture: iphoneos-arm
-Version: 1.0
+Version: 1.0.1
 Description: Rotation Inhibitor with toggle for SBSettings
 Depiction: http://rpetri.ch/cydia/rotationinhibitor/
 Name: Rotation Inhibitor
