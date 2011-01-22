@@ -75,41 +75,32 @@ CHOptimizedMethod(1, self, void, SBNowPlayingBar, _orientationLockHit, id, sende
 {
 	SBOrientationLockManager *lockManager = CHSharedInstance(SBOrientationLockManager);
 	NSString *labelText;
-	if ([lockManager isLocked]) {
-		switch ([lockManager lockOrientation]) {
-			case UIDeviceOrientationPortrait:
-		    	[lockManager lock:UIDeviceOrientationLandscapeLeft];
-				if ([lockManager lockOverride])
-					[lockManager setLockOverride:0 orientation:UIDeviceOrientationUnknown];
-		    	labelText = @"Landscape Left Orientation Locked";
-		    	break;
-			case UIDeviceOrientationLandscapeLeft:
-		    	[lockManager lock:UIDeviceOrientationLandscapeRight];
-				if ([lockManager lockOverride])
-					[lockManager setLockOverride:0 orientation:UIDeviceOrientationUnknown];
-		    	labelText = @"Landscape Right Orientation Locked";
-		    	break;
-			case UIDeviceOrientationLandscapeRight:
-		    	[lockManager lock:UIDeviceOrientationPortraitUpsideDown];
-				if ([lockManager lockOverride])
-					[lockManager setLockOverride:0 orientation:UIDeviceOrientationUnknown];
-		    	labelText = @"Upside Down Orientation Locked";
-		    	break;
-			default:
-				[lockManager unlock];
-				if ([lockManager lockOverride])
-					[lockManager updateLockOverrideForCurrentDeviceOrientation];
-		    	labelText = @"Orientation Unlocked";
-		    	break;
-		}
-	} else {
-    	[lockManager lock:UIDeviceOrientationPortrait];
+	BOOL isLocked = [lockManager isLocked];
+	if (isLocked) {
+		[lockManager unlock];
 		if ([lockManager lockOverride])
 			[lockManager setLockOverride:0 orientation:UIDeviceOrientationPortrait];
-		labelText = @"Portrait Orientation Locked";
+		labelText = @"Orientation Unlocked";
+	} else {
+		[lockManager lock:[(SpringBoard *)[UIApplication sharedApplication] activeInterfaceOrientation]];
+		if ([lockManager lockOverride])
+			[lockManager updateLockOverrideForCurrentDeviceOrientation];
+		switch ([lockManager lockOrientation]) {
+			case UIDeviceOrientationPortrait:
+				labelText = @"Portrait Orientation Locked";
+				break;
+			case UIDeviceOrientationLandscapeLeft:
+				labelText = @"Landscape Left Orientation Locked";
+				break;
+			case UIDeviceOrientationLandscapeRight:
+				labelText = @"Landscape Right Orientation Locked";
+				break;
+			default:
+				labelText = @"Upside Down Orientation Locked";
+				break;
+		}
 	}
-	BOOL isLocked = [lockManager isLocked];
-	[CHIvar(self, _orientationLockButton, UIButton *) setSelected:isLocked];
+	[CHIvar(self, _orientationLockButton, UIButton *) setSelected:!isLocked];
 	[self _displayOrientationStatus:isLocked];
 	[CHIvar(self, _orientationLabel, UILabel *) setText:labelText];
 }
