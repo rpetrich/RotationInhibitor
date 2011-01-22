@@ -50,6 +50,30 @@ static BOOL rotationEnabled;
 - (void)_displayOrientationStatus:(BOOL)isLocked;
 @end
 
+@class SBNowPlayingBarMediaControlsView;
+@interface SBNowPlayingBarView : UIView {
+	UIView *_orientationLockContainer;
+	UIButton *_orientationLockButton;
+	UISlider *_brightnessSlider;
+	UISlider *_volumeSlider;
+	UIImageView *_brightnessImage;
+	UIImageView *_volumeImage;
+	SBNowPlayingBarMediaControlsView *_mediaView;
+	SBApplicationIcon *_nowPlayingIcon;
+}
+@property(readonly, nonatomic) UIButton *orientationLockButton;
+@property(readonly, nonatomic) UISlider *brightnessSlider;
+@property(readonly, nonatomic) UISlider *volumeSlider;
+@property(readonly, nonatomic) SBNowPlayingBarMediaControlsView *mediaView;
+@property(retain, nonatomic) SBApplicationIcon *nowPlayingIcon;
+@property(readonly, nonatomic) UIButton *airPlayButton;
+- (void)_layoutForiPhone;
+- (void)_layoutForiPad;
+- (void)_orientationLockChanged:(id)sender;
+- (void)showAudioRoutesPickerButton:(BOOL)button;
+- (void)showVolume:(BOOL)volume;
+@end
+
 @class SBAppSwitcherModel, SBAppSwitcherBarView;
 @interface SBAppSwitcherController : NSObject {
 	SBAppSwitcherModel *_model;
@@ -100,9 +124,16 @@ CHOptimizedMethod(1, self, void, SBNowPlayingBar, _orientationLockHit, id, sende
 				break;
 		}
 	}
-	[CHIvar(self, _orientationLockButton, UIButton *) setSelected:!isLocked];
-	[self _displayOrientationStatus:isLocked];
-	[CHIvar(self, _orientationLabel, UILabel *) setText:labelText];
+	SBNowPlayingBarView **nowPlayingBarView = CHIvarRef(self, _barView, SBNowPlayingBarView *);
+	UIButton *orientationLockButton;
+	if (nowPlayingBarView) {
+		orientationLockButton = (*nowPlayingBarView).orientationLockButton;
+	} else {
+		orientationLockButton = CHIvar(self, _orientationLockButton, UIButton *);
+		[self _displayOrientationStatus:isLocked];
+		[CHIvar(self, _orientationLabel, UILabel *) setText:labelText];
+	}
+	orientationLockButton.selected = !isLocked;
 }
 
 #pragma mark Preferences
