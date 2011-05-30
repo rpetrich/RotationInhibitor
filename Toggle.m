@@ -86,12 +86,19 @@ static BOOL rotationEnabled;
 + (id)sharedInstanceIfAvailable;
 @end
 
+@interface SBNowPlayingBarView (iOS43)
+@property (assign, nonatomic) NSInteger toggleType;
+@property (readonly, assign, nonatomic) UIButton *toggleButton;
+@end
+
 @interface SpringBoard (OS40)
 - (UIInterfaceOrientation)activeInterfaceOrientation;
 @end
 
 CHDeclareClass(SBOrientationLockManager)
 CHDeclareClass(SBAppSwitcherController)
+
+// 4.0-4.2
 
 CHDeclareClass(SBNowPlayingBar)
 
@@ -133,6 +140,30 @@ CHOptimizedMethod(1, self, void, SBNowPlayingBar, _orientationLockHit, id, sende
 		[self _displayOrientationStatus:isLocked];
 		[CHIvar(self, _orientationLabel, UILabel *) setText:labelText];
 	}
+	orientationLockButton.selected = !isLocked;
+}
+
+// 4.3
+
+CHOptimizedMethod(1, self, void, SBNowPlayingBar, _toggleButtonHit, id, sender)
+{
+	SBNowPlayingBarView **nowPlayingBarView = CHIvarRef(self, _barView, SBNowPlayingBarView *);
+	if (!nowPlayingBarView || [*nowPlayingBarView toggleType] != 0) {
+		CHSuper(1, SBNowPlayingBar, _toggleButtonHit, sender);
+		return;
+	}
+	SBOrientationLockManager *lockManager = CHSharedInstance(SBOrientationLockManager);
+	BOOL isLocked = [lockManager isLocked];
+	if (isLocked) {
+		[lockManager unlock];
+		if ([lockManager lockOverride])
+			[lockManager setLockOverride:0 orientation:UIDeviceOrientationPortrait];
+	} else {
+		[lockManager lock:[(SpringBoard *)[UIApplication sharedApplication] activeInterfaceOrientation]];
+		if ([lockManager lockOverride])
+			[lockManager updateLockOverrideForCurrentDeviceOrientation];
+	}
+	UIButton *orientationLockButton = (*nowPlayingBarView).toggleButton;
 	orientationLockButton.selected = !isLocked;
 }
 
@@ -228,6 +259,7 @@ CHConstructor
 			CHLoadLateClass(SBAppSwitcherController);
 			CHLoadLateClass(SBNowPlayingBar);
 			CHHook(1, SBNowPlayingBar, _orientationLockHit);
+			CHHook(1, SBNowPlayingBar, _toggleButtonHit);
 		}
 	} else {
 		CHLoadLateClass(UIApplication);
