@@ -234,9 +234,25 @@ void setState(BOOL enable)
 
 void invokeHoldAction()
 {
-	SBNowPlayingBar **nowPlayingBar = CHIvarRef([CHClass(SBAppSwitcherController) sharedInstance], _nowPlaying, SBNowPlayingBar *);
-	if (nowPlayingBar)
-		[*nowPlayingBar _orientationLockHit:nil];
+	SBOrientationLockManager *lockManager = CHSharedInstance(SBOrientationLockManager);
+	if ([lockManager isLocked]) {
+		switch ([lockManager lockOrientation]) {
+			case UIInterfaceOrientationPortrait:
+				[lockManager lock:UIInterfaceOrientationLandscapeLeft];
+				break;
+			case UIInterfaceOrientationLandscapeLeft:
+				[lockManager lock:(UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) ? UIInterfaceOrientationPortraitUpsideDown : UIInterfaceOrientationLandscapeRight];
+				break;
+			case UIInterfaceOrientationPortraitUpsideDown:
+				[lockManager lock:UIInterfaceOrientationLandscapeRight];
+				break;
+			case UIInterfaceOrientationLandscapeRight:
+				[lockManager unlock];
+				break;
+		}
+	} else {
+		[lockManager lock:UIInterfaceOrientationPortrait];
+	}
 }
 
 // OS 3.x
