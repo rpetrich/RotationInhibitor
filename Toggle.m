@@ -21,14 +21,20 @@ static BOOL rotationEnabled;
 	int _lockedOrientation;
 	int _overrideOrientation;
 }
-+ (id)sharedInstance;
-- (void)lock:(int)lock;
++ (SBOrientationLockManager *)sharedInstance;
+- (void)lock:(UIInterfaceOrientation)lock;
 - (void)unlock;
 - (BOOL)isLocked;
-- (int)lockOrientation;
-- (void)setLockOverride:(int)override orientation:(int)orientation;
+- (UIInterfaceOrientation)lockOrientation;
+- (void)setLockOverride:(int)lockOverride orientation:(UIInterfaceOrientation)orientation;
 - (int)lockOverride;
 - (void)updateLockOverrideForCurrentDeviceOrientation;
+@end
+
+@interface SBOrientationLockManager (iOS50)
+- (BOOL)lockOverrideEnabled;
+- (void)setLockOverrideEnabled:(BOOL)enabled forReason:(NSString *)reason;
+- (UIInterfaceOrientation)userLockOrientation;
 @end
 
 @interface SBNowPlayingBar : NSObject {
@@ -109,14 +115,20 @@ CHOptimizedMethod(1, self, void, SBNowPlayingBar, _orientationLockHit, id, sende
 	BOOL isLocked = [lockManager isLocked];
 	if (isLocked) {
 		[lockManager unlock];
-		if ([lockManager lockOverride])
-			[lockManager setLockOverride:0 orientation:UIDeviceOrientationPortrait];
+		if ([lockManager respondsToSelector:@selector(lockOverrideEnabled)] ? [lockManager lockOverrideEnabled] : [lockManager lockOverride]) {
+			if ([lockManager respondsToSelector:@selector(setLockOverrideEnabled:forReason:)]) {
+				for (id reason in [[CHIvar(lockManager, _lockOverrideReasons, NSMutableSet *) copy] autorelease])
+					[lockManager setLockOverrideEnabled:NO forReason:reason];
+			} else {
+				[lockManager setLockOverride:0 orientation:UIDeviceOrientationPortrait];
+			}
+		}
 		labelText = @"Orientation Unlocked";
 	} else {
 		[lockManager lock:[(SpringBoard *)[UIApplication sharedApplication] activeInterfaceOrientation]];
-		if ([lockManager lockOverride])
+		if ([lockManager respondsToSelector:@selector(lockOverrideEnabled)] ? [lockManager lockOverrideEnabled] : [lockManager lockOverride])
 			[lockManager updateLockOverrideForCurrentDeviceOrientation];
-		switch ([lockManager lockOrientation]) {
+		switch ([lockManager respondsToSelector:@selector(userLockOrientation)] ? [lockManager userLockOrientation] : [lockManager lockOrientation]) {
 			case UIDeviceOrientationPortrait:
 				labelText = @"Portrait Orientation Locked";
 				break;
@@ -156,11 +168,17 @@ CHOptimizedMethod(1, self, void, SBNowPlayingBar, _toggleButtonHit, id, sender)
 	BOOL isLocked = [lockManager isLocked];
 	if (isLocked) {
 		[lockManager unlock];
-		if ([lockManager lockOverride])
-			[lockManager setLockOverride:0 orientation:UIDeviceOrientationPortrait];
+		if ([lockManager respondsToSelector:@selector(lockOverrideEnabled)] ? [lockManager lockOverrideEnabled] : [lockManager lockOverride]) {
+			if ([lockManager respondsToSelector:@selector(setLockOverrideEnabled:forReason:)]) {
+				for (id reason in [[CHIvar(lockManager, _lockOverrideReasons, NSMutableSet *) copy] autorelease])
+					[lockManager setLockOverrideEnabled:NO forReason:reason];
+			} else {
+				[lockManager setLockOverride:0 orientation:UIDeviceOrientationPortrait];
+			}
+		}
 	} else {
 		[lockManager lock:[(SpringBoard *)[UIApplication sharedApplication] activeInterfaceOrientation]];
-		if ([lockManager lockOverride])
+		if ([lockManager respondsToSelector:@selector(lockOverrideEnabled)] ? [lockManager lockOverrideEnabled] : [lockManager lockOverride])
 			[lockManager updateLockOverrideForCurrentDeviceOrientation];
 	}
 	UIButton *orientationLockButton = (*nowPlayingBarView).toggleButton;
@@ -210,12 +228,18 @@ void setState(BOOL enable)
 		SBOrientationLockManager *lockManager = CHSharedInstance(SBOrientationLockManager);
 		if (enable) {
 			[lockManager unlock];
-			if ([lockManager lockOverride])
+			if ([lockManager respondsToSelector:@selector(lockOverrideEnabled)] ? [lockManager lockOverrideEnabled] : [lockManager lockOverride])
 				[lockManager updateLockOverrideForCurrentDeviceOrientation];
 		} else {
 			[lockManager lock:[(SpringBoard *)[UIApplication sharedApplication] activeInterfaceOrientation]];
-			if ([lockManager lockOverride])
-				[lockManager setLockOverride:0 orientation:UIDeviceOrientationUnknown];
+			if ([lockManager respondsToSelector:@selector(lockOverrideEnabled)] ? [lockManager lockOverrideEnabled] : [lockManager lockOverride]) {
+				if ([lockManager respondsToSelector:@selector(setLockOverrideEnabled:forReason:)]) {
+					for (id reason in [[CHIvar(lockManager, _lockOverrideReasons, NSMutableSet *) copy] autorelease])
+						[lockManager setLockOverrideEnabled:NO forReason:reason];
+				} else {
+					[lockManager setLockOverride:0 orientation:UIDeviceOrientationPortrait];
+				}
+			}
 		}
 		SBNowPlayingBar **nowPlayingBar = CHIvarRef([CHClass(SBAppSwitcherController) sharedInstanceIfAvailable], _nowPlaying, SBNowPlayingBar *);
 		if (nowPlayingBar)
@@ -236,7 +260,7 @@ void invokeHoldAction()
 {
 	SBOrientationLockManager *lockManager = CHSharedInstance(SBOrientationLockManager);
 	if ([lockManager isLocked]) {
-		switch ([lockManager lockOrientation]) {
+		switch ([lockManager respondsToSelector:@selector(userLockOrientation)] ? [lockManager userLockOrientation] : [lockManager lockOrientation]) {
 			case UIInterfaceOrientationPortrait:
 				[lockManager lock:UIInterfaceOrientationLandscapeLeft];
 				break;
