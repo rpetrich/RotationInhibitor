@@ -6,6 +6,6 @@ Version: 1.0.4
 Description: Disable device rotation with toggle for SBSettings
 Depiction: http://rpetri.ch/cydia/rotationinhibitor/
 Name: Rotation Inhibitor
-Depends: sbsettings (>= 1.10) | firmware (>= 4.0), firmware (>= 3.0), firmware (<< 5.1)
+Depends: sbsettings (>= 1.10) | firmware (>= 4.0), libactivator (>= 1.6.2), firmware (>= 3.0), firmware (<< 5.2)
 Author: Ryan Petrich <rpetrich+rotationinhibitor@gmail.com>
 Icon: file:///var/mobile/Library/SBSettings/Themes/Default/Rotation/off.png
